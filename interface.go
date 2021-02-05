@@ -3,7 +3,6 @@ package gnfiles
 import "github.com/gnames/gnlib/ent/gnvers"
 
 type GNfiles interface {
-	Dump() error
-	Update() error
+	Sync() error
 	Version() gnvers.Version
 }

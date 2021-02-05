@@ -1,5 +1,10 @@
 package exofs
 
+import (
+	"github.com/gnames/gnfiles/ent/metadata"
+	api "github.com/ipfs/go-ipfs-api"
+)
+
 type ExoFS interface {
 	Connect(string) error
 	Add(path string) (id string, err error)
@@ -7,5 +12,7 @@ type ExoFS interface {
 	Pin(path string) error
 	Unpin(id string) error
 	PinExists(id string) (bool, error)
-	Publish(key, id string) (keyID string, err error)
+	KeyIPNS(keyName string) (api.Key, error)
+	Publish(ipnsKeyName, id string) (ipnsKey string, err error)
+	MetaData(ipnsPath, path string) (metadata.MetaFiles, error)
 }
