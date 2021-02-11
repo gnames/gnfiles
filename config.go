@@ -1,19 +1,26 @@
 package gnfiles
 
+import (
+	"log"
+	"path/filepath"
+
+	"github.com/gnames/gnsys"
+)
+
 type Config struct {
-	apiURL     string
-	keyName    string
-	keyID      string
-	root       string
-	withUpload bool
+	ApiURL     string
+	KeyName    string
+	Source     string
+	Dir        string
+	WithUpload bool
 }
 
 func NewConfig(opts ...Option) *Config {
 	cfg := &Config{
-		apiURL:     "localhost:5001",
-		keyName:    "self",
-		root:       "untitled",
-		withUpload: false,
+		ApiURL:     "localhost:5001",
+		KeyName:    "self",
+		Dir:        "untitled",
+		WithUpload: false,
 	}
 	for i := range opts {
 		opts[i](cfg)
@@ -25,30 +32,37 @@ type Option func(*Config)
 
 func OptApiURL(s string) Option {
 	return func(c *Config) {
-		c.apiURL = s
+		c.ApiURL = s
 	}
 }
 
 func OptKeyName(s string) Option {
 	return func(c *Config) {
-		c.keyName = s
+		c.KeyName = s
 	}
 }
 
-func OptKeyID(s string) Option {
+func OptSource(s string) Option {
 	return func(c *Config) {
-		c.keyID = s
+		c.Source = s
 	}
 }
 
-func OptRoot(s string) Option {
+func OptDir(s string) Option {
 	return func(c *Config) {
-		c.root = s
+		c.Dir = prepareDir(s)
 	}
 }
 
-func OptWithUpload(b bool) Option {
-	return func(c *Config) {
-		c.withUpload = b
+func prepareDir(s string) string {
+	var err error
+	s, err = gnsys.ConvertTilda(s)
+	if err == nil {
+		s, err = filepath.Abs(s)
 	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return s
 }

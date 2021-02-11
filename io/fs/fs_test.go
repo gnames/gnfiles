@@ -14,7 +14,7 @@ const (
 func TestMetaData(t *testing.T) {
 	is := is.New(t)
 	l := fs.NewLocalFS(testDir)
-	md, err := l.MetaData()
+	md, err := l.CreateMetaData()
 	is.NoErr(err)
 	is.True(len(md) > 0) // empty metadata
 }

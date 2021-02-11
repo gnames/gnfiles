@@ -18,25 +18,23 @@ var (
 	local = fs.NewLocalFS(testDir)
 )
 
-func TestSetMetaData(t *testing.T) {
-	is := is.New(t)
-
-	key, err := exo.KeyIPNS("self")
-	is.NoErr(err) // cannot find key
-
-	f := New(testDir, key, exo, local)
-	_ = f.SetMetaData()
-	// is.NoErr(err) // cannot set metadata
-}
-
 func TestPublishMetaData(t *testing.T) {
+	var err error
+	var cid string
 	is := is.New(t)
-	key, err := exo.KeyIPNS("self")
-	is.NoErr(err) // cannot find key
-
-	f := New(testDir, key, exo, local)
-	_ = f.SetMetaData()
-	err = f.PublishMetaData()
-
-	is.NoErr(err) // cannot publish metadata
+	fcfg := Config{
+		Root:    testDir,
+		KeyName: "self",
+		ID:      "k51qzi5uqu5dhjz3b0j9bhjp3uqblb04iy2v7pxcm7dnj07zkr1im675hu7o1x",
+	}
+	f := New(fcfg, exo, local)
+	err = f.SetMetaData()
+	is.NoErr(err) // cannot set metadata
+	err = f.Dump(false)
+	is.NoErr(err) // cannot dump files
+	err = f.Update()
+	is.NoErr(err) // cannot upload files
+	cid, err = f.PublishMetaData()
+	is.NoErr(err)          // cannot publish metadata
+	is.True(len(cid) > 40) // did not generate CID
 }

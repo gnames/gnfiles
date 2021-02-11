@@ -3,7 +3,6 @@ debug.test
 t
 untitled
 _META.json
-_KEY
 t.json
 .env
 *.pprof

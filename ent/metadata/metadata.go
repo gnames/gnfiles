@@ -8,8 +8,8 @@ type Action int
 
 const (
 	NoAction Action = iota
-	Upload
 	Download
+	Upload
 )
 
 type MetaData struct {

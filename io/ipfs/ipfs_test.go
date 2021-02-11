@@ -13,38 +13,29 @@ import (
 )
 
 const (
-	keyName  = "self"
-	shellURL = "localhost:5001"
-	ipfsCID  = "QmYp1dP9eyhsnmzjXtwZAZ1vKTYhQkLmhYoZfNjjqPdsd8"
-	olegCID  = "QmZC4FytJmNQwXX2GyPaJ4gbKbPsDE7VHFgACAsb71iKkT"
-	testDir  = "../../testdata"
+	keyName     = "self"
+	shellURL    = "localhost:5001"
+	olegCID     = "QmZC4FytJmNQwXX2GyPaJ4gbKbPsDE7VHFgACAsb71iKkT"
+	testDataDir = "../../testdata"
 )
 
 var (
-	ipfsDir      = filepath.Join(testDir, "test", "ipfs")
+	testDir      = filepath.Join(testDataDir, "test")
+	newDir       = filepath.Join(testDataDir, "new")
+	ipfsDir      = filepath.Join(testDataDir, "test", "ipfs")
 	olegFilePath = filepath.Join(ipfsDir, "oleg.txt")
+	metaSrc      = filepath.Join(testDataDir, "_META.json")
 )
 
-func TestNew(t *testing.T) {
-	is := is.New(t)
-	efs := ipfs.NewExoFS(shellURL)
-	err := efs.Connect("")
-	is.NoErr(err) // connection did not succed
-
-}
-
-func TestMetaData(t *testing.T) {
+func TestGetMetaData(t *testing.T) {
 	efs := ipfs.NewExoFS(shellURL)
 	is := is.New(t)
 
-	key, err := efs.KeyIPNS(keyName)
-	is.NoErr(err)
-	keyPath := paths.IPNSPath(key.Id)
-	metaPath := paths.MetaPath(testDir)
+	metaDest := paths.MetaPath(testDir)
 
-	md, err := efs.MetaData(keyPath, metaPath)
-	is.NoErr(err)
-	is.True(len(md) > 0)
+	md, err := efs.GetMetaData(metaSrc, metaDest)
+	is.NoErr(err)        // get metadata returns error
+	is.True(len(md) > 0) // metadata should not be empty
 }
 
 func TestAdd(t *testing.T) {
@@ -66,7 +57,7 @@ func TestAdd(t *testing.T) {
 func TestGet(t *testing.T) {
 	efs := ipfs.NewExoFS(shellURL)
 	is := is.New(t)
-	path := filepath.Join(testDir, "about")
+	path := filepath.Join(testDataDir, "about")
 
 	err := efs.Get(olegCID, path)
 	is.NoErr(err) // download from IPFS failed
@@ -126,6 +117,6 @@ func TestKeyIPNS(t *testing.T) {
 	is.True(strings.HasPrefix(key.Id, "k5")) // wrong ipns key id
 
 	key, err = efs.KeyIPNS("nokey")
-	is.True(err != nil)  // bad key should return error
-	is.Equal(key.Id, "") // bad key should have empty id
+	is.True(err != nil) // bad key should return error
+	is.Equal(key, nil)  // bad key should be nil
 }

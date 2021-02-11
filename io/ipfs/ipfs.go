@@ -27,15 +27,11 @@ func NewExoFS(url string) exofs.ExoFS {
 	}
 }
 
-func (fs *efs) Connect(URL string) error {
-	return nil
-}
-
-func (e *efs) MetaData(
-	ipnsPath, metaPath string,
+func (e *efs) GetMetaData(
+	source, metaPath string,
 ) (metadata.MetaFiles, error) {
-	var meta map[string]*metadata.MetaData
-	err := e.Get(ipnsPath, metaPath)
+	var meta metadata.MetaFiles
+	err := e.Get(source, metaPath)
 	if err != nil {
 		return meta, err
 	}
@@ -59,7 +55,8 @@ func (e *efs) MetaData(
 		}
 		res[k] = v
 	}
-	return metadata.MetaFiles(res), err
+	mf := metadata.MetaFiles(res)
+	return mf, err
 }
 
 func (e *efs) Add(path string) (id string, err error) {
@@ -71,8 +68,28 @@ func (e *efs) Add(path string) (id string, err error) {
 	return e.ipfs.Add(f)
 }
 
-func (e *efs) Get(id, path string) error {
-	return e.ipfs.Get(id, path)
+func (e *efs) Get(source, path string) error {
+	if isFile(source) {
+		return GetterFile{}.Get(source, path)
+	}
+
+	if isURL(source) {
+		return GetterHTTP{}.Get(source, path)
+	}
+
+	if isPathIPNS(source) {
+		return e.ipfs.Get(source, path)
+	}
+	if isKeyIPNS(source) {
+		return e.ipfs.Get(paths.IPNSPath(source), path)
+	}
+	if isPathIPFS(source) {
+		source = strings.TrimLeft(source, "/ipfs/")
+	}
+	if isCID(source) {
+		return e.ipfs.Get(source, path)
+	}
+	return fmt.Errorf("unknown source type '%s'", source)
 }
 
 func (e *efs) Pin(id string) error {
@@ -96,16 +113,20 @@ func (e *efs) PinExists(id string) (bool, error) {
 	return false, nil
 }
 
-func (e *efs) KeyIPNS(keyName string) (api.Key, error) {
-	var res api.Key
-	keys, err := e.ipfs.KeyList(context.Background())
+func (e *efs) Keys() ([]*api.Key, error) {
+	return e.ipfs.KeyList(context.Background())
+}
+
+func (e *efs) KeyIPNS(keyName string) (*api.Key, error) {
+	var res *api.Key
+	keys, err := e.Keys()
 
 	if err != nil {
 		return res, err
 	}
 	for i := range keys {
 		if keys[i].Name == keyName {
-			return *keys[i], nil
+			return keys[i], nil
 		}
 	}
 	return res, fmt.Errorf("cannot find IPNS key '%s'", keyName)

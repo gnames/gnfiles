@@ -23,7 +23,7 @@ func NewLocalFS(dir string) localfs.LocalFS {
 	return &lfs{root: dir}
 }
 
-func (l *lfs) MetaData() (metadata.MetaFiles, error) {
+func (l *lfs) CreateMetaData() (metadata.MetaFiles, error) {
 	res := make(map[string]*metadata.MetaData)
 	err := filepath.Walk(l.root,
 		func(path string, info os.FileInfo, err error) error {
@@ -64,18 +64,6 @@ func (l *lfs) SaveMetaData(md metadata.MetaFiles) (err error) {
 	if err == nil {
 		_, err = metaFile.Write(jsonMeta)
 	}
-	return err
-}
-
-func (l *lfs) SaveKey(key string) (err error) {
-	path := paths.KeyPath(l.root)
-	keyFile, err := os.Create(path)
-	defer keyFile.Close()
-
-	if err == nil {
-		_, err = keyFile.Write([]byte(key + "\n"))
-	}
-
 	return err
 }
 

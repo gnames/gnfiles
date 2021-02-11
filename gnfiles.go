@@ -16,28 +16,35 @@ type gnfiles struct {
 }
 
 func New(cfg *Config) GNfiles {
-	if cfg.keyName == "" {
+	if cfg.KeyName == "" {
 		log.Fatal("Cannot download data without a key")
 	}
-	log.Printf("Files will be downloaded to '%s' directory.", cfg.root)
+	log.Printf("Files will be downloaded to '%s' directory.", cfg.Dir)
 	return &gnfiles{
 		cfg: cfg,
 	}
 }
 
 func (gnf *gnfiles) Sync() (err error) {
-	exo := ipfs.NewExoFS(gnf.cfg.apiURL)
-	local := fs.NewLocalFS(gnf.cfg.root)
-	f := files.New(gnf.cfg.root, gnf.key(), exo, local)
+	exo := ipfs.NewExoFS(gnf.cfg.ApiURL)
+	local := fs.NewLocalFS(gnf.cfg.Dir)
 
-	err = gnsys.MakeDir(gnf.cfg.root)
+	fcfg := files.Config{
+		Root:    gnf.cfg.Dir,
+		KeyName: gnf.cfg.KeyName,
+		Source:  gnf.cfg.Source,
+	}
+	f := files.New(fcfg, exo, local)
+
+	err = gnsys.MakeDir(gnf.cfg.Dir)
 	if err == nil {
 		err = f.SetMetaData()
 	}
 	if err == nil {
-		err = f.Dump()
+		downloadAll := !gnf.cfg.WithUpload
+		err = f.Dump(downloadAll)
 	}
-	if err == nil && gnf.cfg.withUpload {
+	if err == nil && gnf.cfg.WithUpload {
 		err = f.Update()
 	}
 	return err
@@ -49,7 +56,7 @@ func (gnf *gnfiles) Version() gnvers.Version {
 
 func (gnf *gnfiles) key() api.Key {
 	return api.Key{
-		Name: gnf.cfg.keyName,
-		Id:   gnf.cfg.keyID,
+		Name: gnf.cfg.KeyName,
+		Id:   gnf.cfg.Source,
 	}
 }

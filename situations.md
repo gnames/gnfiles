@@ -59,3 +59,32 @@
 ### only local path exists
 
   - meta gets new file, it is uploaded.
+
+## Possible states of keys
+
+### User has download key.ID, does not have sync key (does have self key)
+
+We should not use `self`, because user can already have `ipns` connected to
+it. If KeyName comes only with self key and upload is enabled, ask users if
+they want to set a new key in config file.
+
+Use key.ID for downloading files into given directory. If directory is
+alredy not-empty, tell that for download it has to be totally empty.
+
+### User has key.ID but does not have sync key
+
+Make a warning if user uses `self` key
+
+1. User tries to do download.
+
+    Try to do download using key.Name, if it does not work say they have to
+    upload first.
+
+2. User sets upload
+
+    if there are `_META` file, download from IPFS, upload to IPFS.
+    Ask if it is what user wants.
+
+### User has key.Name, but it does not exist, does not have key.ID
+
+Show what keys do exist and ask to create a key.

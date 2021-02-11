@@ -3,7 +3,7 @@ package paths
 import "path/filepath"
 
 func RootPath(root, dir string) string {
-	return filepath.Join(".", root, dir)
+	return filepath.Join(root, dir)
 }
 
 func IPFSPath(id string) string {
@@ -16,8 +16,4 @@ func IPNSPath(keyID string) string {
 
 func MetaPath(dir string) string {
 	return filepath.Join(dir, "_META.json")
-}
-
-func KeyPath(dir string) string {
-	return filepath.Join(dir, "_KEY")
 }
