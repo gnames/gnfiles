@@ -120,6 +120,8 @@ func (f *files) PublishMetaData() (string, error) {
 		cid, err = f.exo.Add(paths.MetaPath(f.root))
 	}
 	if err == nil && f.keyWrite != nil {
+		log.Printf("Publishing to permalink using '%s' key", f.keyWrite.Name)
+		log.Printf("It will take a while...")
 		key, err = f.exo.Publish(f.keyWrite.Name, cid)
 	}
 	if err == nil {
@@ -155,6 +157,7 @@ func (f *files) Upload() error {
 			continue
 		}
 		path := paths.RootPath(f.root, k)
+		fmt.Println(path)
 		id, err := f.exo.Add(path)
 		if err != nil {
 			return err

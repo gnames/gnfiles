@@ -119,8 +119,11 @@ func (e *efs) Keys() ([]*api.Key, error) {
 
 func (e *efs) KeyIPNS(keyName string) (*api.Key, error) {
 	var res *api.Key
-	keys, err := e.Keys()
+	if keyName == "" {
+		return res, nil
+	}
 
+	keys, err := e.Keys()
 	if err != nil {
 		return res, err
 	}
@@ -129,6 +132,7 @@ func (e *efs) KeyIPNS(keyName string) (*api.Key, error) {
 			return keys[i], nil
 		}
 	}
+
 	return res, fmt.Errorf("cannot find IPNS key '%s'", keyName)
 }
 

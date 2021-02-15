@@ -18,7 +18,7 @@ type Config struct {
 func NewConfig(opts ...Option) *Config {
 	cfg := &Config{
 		ApiURL:     "localhost:5001",
-		KeyName:    "self",
+		KeyName:    "",
 		Dir:        "untitled",
 		WithUpload: false,
 	}
