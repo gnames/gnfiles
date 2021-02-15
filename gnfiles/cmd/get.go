@@ -48,11 +48,10 @@ gnfiles get [id] [dir]
 		}
 		cfg.WithUpload = false
 		gnf := gnfiles.New(cfg)
-		err := gnf.Sync()
+		err := gnf.Download()
 		if err != nil {
 			log.Fatal(err)
 		}
-
 	},
 }
 
@@ -99,6 +98,6 @@ func processGetArgs(
 		cfg.Source = source
 	}
 	if dir != "" {
-		cfg.Dir = dir
+		cfg.Dir = gnfiles.PrepareDir(dir)
 	}
 }

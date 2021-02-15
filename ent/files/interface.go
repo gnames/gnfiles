@@ -2,7 +2,9 @@ package files
 
 type Files interface {
 	SetMetaData() error
+	MetaDownload() error
+	MetaUpload() error
 	PublishMetaData() (cid string, err error)
-	Dump(force bool) error
-	Update() error
+	Download() error
+	Upload() error
 }

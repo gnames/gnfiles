@@ -50,11 +50,11 @@ func OptSource(s string) Option {
 
 func OptDir(s string) Option {
 	return func(c *Config) {
-		c.Dir = prepareDir(s)
+		c.Dir = PrepareDir(s)
 	}
 }
 
-func prepareDir(s string) string {
+func PrepareDir(s string) string {
 	var err error
 	s, err = gnsys.ConvertTilda(s)
 	if err == nil {

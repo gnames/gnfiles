@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"strings"
 
 	"github.com/gnames/gnfiles/ent/exofs"
 	"github.com/gnames/gnfiles/ent/localfs"
@@ -23,14 +22,13 @@ type Config struct {
 }
 
 type files struct {
-	root       string
-	readID     string
-	keyWrite   *api.Key
-	exo        exofs.ExoFS
-	local      localfs.LocalFS
-	exometa    metadata.MetaFiles
-	localmeta  metadata.MetaFiles
-	withUpload bool
+	root      string
+	source    string
+	keyWrite  *api.Key
+	exo       exofs.ExoFS
+	local     localfs.LocalFS
+	exometa   metadata.MetaFiles
+	localmeta metadata.MetaFiles
 }
 
 func New(
@@ -39,11 +37,10 @@ func New(
 	lfs localfs.LocalFS,
 ) Files {
 	res := &files{
-		root:       cfg.Root,
-		readID:     cfg.Source,
-		withUpload: cfg.WithUpload,
-		exo:        efs,
-		local:      lfs,
+		root:   cfg.Root,
+		source: cfg.Source,
+		exo:    efs,
+		local:  lfs,
 	}
 	var keyWrite *api.Key
 	var err error
@@ -60,37 +57,40 @@ func New(
 
 func (f *files) SetMetaData() (err error) {
 	log.Print("Getting metadata")
-	var exoPath, metaPath string
-	if f.readID == "" {
-		return errors.New("no IPFS CID or k5 ID given")
-	}
-
-	if strings.HasPrefix(f.readID, "k5") {
-		exoPath = paths.IPNSPath(f.readID)
-	} else {
-		exoPath = paths.IPFSPath(f.readID)
-	}
+	var metaPath string
 
 	metaPath = paths.MetaPath(f.root)
 
 	f.localmeta, err = f.local.CreateMetaData()
 
-	if err != nil {
-		return err
+	if err == nil && f.source != "" {
+		f.exometa, err = f.exo.GetMetaData(f.source, metaPath)
+	}
+	return err
+}
+
+func (f *files) MetaDownload() (err error) {
+	if len(f.exometa) == 0 {
+		err = errors.New("metadata from IPFS is empty")
 	}
 
-	f.exometa, err = f.exo.GetMetaData(exoPath, metaPath)
-	if err != nil {
-		return err
+	if err == nil {
+		for k, v := range f.exometa {
+			f.localmeta[k] = v
+			f.localmeta[k].Action = metadata.Download
+		}
 	}
+	return err
+}
 
+func (f *files) MetaUpload() error {
 	// return error, because no metadata can be created
 	if len(f.localmeta)+len(f.exometa) == 0 {
 		return errors.New("no remote or local files exist")
 	}
 
 	// if local dir is empty, download files from IPFS
-	if len(f.localmeta) == 0 || !f.withUpload {
+	if len(f.localmeta) == 0 {
 		for k, v := range f.exometa {
 			f.localmeta[k] = v
 			f.localmeta[k].Action = metadata.Download
@@ -131,10 +131,10 @@ func (f *files) PublishMetaData() (string, error) {
 	return cid, err
 }
 
-func (f *files) Dump(force bool) error {
+func (f *files) Download() error {
 	log.Print("Downloading files")
 	for k, v := range f.localmeta {
-		if v.ID == "" || (!force && v.Action != metadata.Download) {
+		if v.ID == "" || v.Action != metadata.Download {
 			continue
 		}
 		path := paths.RootPath(f.root, k)
@@ -142,13 +142,13 @@ func (f *files) Dump(force bool) error {
 		fmt.Println(path)
 		err := f.exo.Get(paths.IPFSPath(v.ID), path)
 		if err != nil {
-			return err
+			log.Printf("cannot download '%s': %v", path, err)
 		}
 	}
 	return nil
 }
 
-func (f *files) Update() error {
+func (f *files) Upload() error {
 	log.Print("Updating files")
 	for k, v := range f.localmeta {
 		if v.Action != metadata.Upload {
@@ -159,11 +159,7 @@ func (f *files) Update() error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("DEBUG id: %s\n", id)
 		f.localmeta[k].Info.ID = id
-	}
-	for _, v := range f.localmeta {
-		fmt.Printf("DEBUG: localmeta: %#v\n", *v)
 	}
 	_, err := f.PublishMetaData()
 	return err

@@ -1,8 +1,6 @@
 package gnfiles
 
 import (
-	"log"
-
 	"github.com/gnames/gnfiles/ent/files"
 	"github.com/gnames/gnfiles/io/fs"
 	"github.com/gnames/gnfiles/io/ipfs"
@@ -16,16 +14,40 @@ type gnfiles struct {
 }
 
 func New(cfg *Config) GNfiles {
-	if cfg.KeyName == "" {
-		log.Fatal("Cannot download data without a key")
-	}
-	log.Printf("Files will be downloaded to '%s' directory.", cfg.Dir)
 	return &gnfiles{
 		cfg: cfg,
 	}
 }
 
-func (gnf *gnfiles) Sync() (err error) {
+func (gnf *gnfiles) Download() (err error) {
+	var f files.Files
+	f, err = gnf.initFiles()
+
+	if err == nil {
+		err = f.MetaDownload()
+	}
+
+	if err == nil {
+		f.Download()
+	}
+	return err
+}
+
+func (gnf *gnfiles) Upload() (err error) {
+	var f files.Files
+	f, err = gnf.initFiles()
+
+	if err == nil {
+		err = f.MetaUpload()
+	}
+
+	if err == nil {
+		err = f.Upload()
+	}
+	return err
+}
+
+func (gnf *gnfiles) initFiles() (f files.Files, err error) {
 	exo := ipfs.NewExoFS(gnf.cfg.ApiURL)
 	local := fs.NewLocalFS(gnf.cfg.Dir)
 
@@ -34,20 +56,13 @@ func (gnf *gnfiles) Sync() (err error) {
 		KeyName: gnf.cfg.KeyName,
 		Source:  gnf.cfg.Source,
 	}
-	f := files.New(fcfg, exo, local)
+	f = files.New(fcfg, exo, local)
 
 	err = gnsys.MakeDir(gnf.cfg.Dir)
 	if err == nil {
 		err = f.SetMetaData()
 	}
-	if err == nil {
-		downloadAll := !gnf.cfg.WithUpload
-		err = f.Dump(downloadAll)
-	}
-	if err == nil && gnf.cfg.WithUpload {
-		err = f.Update()
-	}
-	return err
+	return f, err
 }
 
 func (gnf *gnfiles) Version() gnvers.Version {

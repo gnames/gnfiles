@@ -51,7 +51,7 @@ gnfiles <dir> <key_name>
 		}
 		cfg.WithUpload = true
 		gnf := gnfiles.New(cfg)
-		err := gnf.Sync()
+		err := gnf.Upload()
 		if err != nil {
 			log.Fatal(err)
 		}
