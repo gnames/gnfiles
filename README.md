@@ -18,7 +18,7 @@ ipfs daemon &
 
 ### Upload directory to IPFS
 
-A directory can by uploaded to IPFS if IPFS node is runnin locally.
+A directory can by uploaded to IPFS if IPFS node is running locally.
 Optionally, you can set a permalink using IPNS keys.
 
 ```bash
